@@ -3,7 +3,7 @@ OVO Client
 
 **INCOMPLETE.  DO NOT USE**
 
-This is a small python client for integrating applications with the AkuLaku API.
+This is a small python client for integrating applications with the OVO API.
 
 
 Quickstart
@@ -20,7 +20,7 @@ Development
 
 ```bash
 # install requirements
-pip install -r requirements.txt
+pip install -r requirements_dev.txt
 
 # add sources directory to the search path
 PYTHONPATH=$PYTHONPATH:$(pwd)/src
