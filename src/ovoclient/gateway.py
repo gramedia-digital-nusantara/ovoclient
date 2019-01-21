@@ -36,19 +36,18 @@ class OvoClientGateway:
     def generate_signature(self, random: int):
         return hmac.new(f'{self.app_id}{random}'.encode(), self.secret_key.encode(), hashlib.sha256)
 
-    def send_request(self, request_data):
+    def send_request(self, request_data, random_number):
         data = request_data.serialize()
-        random_number = int(datetime.timestamp())
 
         headers = {
             'app-id': self.app_id,
             'Random': random_number,
-            'Hmac': self.generate_signature(random_number)
+            'Hmac': self.generate_signature(random_number).digest()
         }
         try:
             url = f'{self.base_url}/pos'
-            response = requests.post(url, headers, data)
-            if response != HTTPStatus.OK:
+            response = requests.post(url=url, headers=headers, data=data)
+            if response.status_code != HTTPStatus.OK:
                 raise Exception
 
             response_data = PaymentResponse.from_api_json(response.json())
@@ -69,15 +68,19 @@ class OvoClientGateway:
         """
         if payment_request.transaction_type != TransactionType.PUSH_TO_PAY:
             raise OvoClientError('Invalid Transaction type')
-        return self.send_request(payment_request)
+        random_number = int(datetime.now().timestamp())
+        return self.send_request(payment_request, random_number)
 
     def reverse_payment(self, reverse_request:PaymentRequest):
         if reverse_request.transaction_type != TransactionType.REVERSAL:
             raise OvoClientError('Invalid Transaction type')
-        return self.send_request(reverse_request)
+        random_number = int(datetime.now().timestamp())
+        return self.send_request(reverse_request, random_number)
 
     def void_payment(self, void_request:PaymentRequest):
         if void_request.transaction_type != TransactionType.VOID:
             raise OvoClientError('Invalid Transaction type')
-        return self.send_request(void_request)
+        random_number = int(datetime.now().timestamp())
+
+        return self.send_request(void_request, random_number)
 
