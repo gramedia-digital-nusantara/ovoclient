@@ -1,5 +1,5 @@
 from behave import *
-from ovoclient.models import TransactionRequest, AppSource
+from ovoclient.models import TransactionRequest, AppSource, PaymentRequest
 
 
 @given("a TransactionRequest with batch_no = {batch_no}, phone = {phone}, merchant_invoice = {merchant_invoice}")
@@ -51,25 +51,41 @@ def step_impl(context):
     """
     :type context: behave.runner.Context
     """
-    request_type, processing_code, description = context.examples.get('transaction_type').value
+    request_type, processing_code, description = context.example_request.get('transaction_type').value
 
     assert context.entity.request_type == request_type
     assert context.entity.processing_code == processing_code
     assert context.serialized == {
         'type': request_type,
         'processingCode': processing_code,
-        'amount': 50000,
+        'amount': 95000,
         'date': '2019-01-01 00:00:00',
         'referenceNumber': '0023902',
         'tid': '12323',
-        'mid': 'mid',
+        'mid': '0010000000MM001',
         'merchantId': 'MID123445',
         'storeCode': 'STORE01',
         'appSource': AppSource.EDC.value,
         'transactionRequestData': {
-            'batchNo': 'BATCH1',
+            'batchNo': '000004',
             'phone': '091029302',
             'merchantInvoice': 'INV-0010232'
         }
     }
 
+
+@when("I process the request")
+def step_impl(context):
+    """
+    :type context: behave.runner.Context
+    """
+    context.entity = PaymentRequest(**context.example_request)
+
+
+@then("the response is converted to PaymentRequest")
+def step_impl(context):
+    """
+    :type context: behave.runner.Context
+    """
+    assert isinstance(context.entity, PaymentRequest)
+    assert context.entity.reference_number == context.example_request.get('reference_number')

@@ -13,7 +13,7 @@ from http import HTTPStatus
 import requests
 
 from ovoclient.exceptions import OvoClientError
-from ovoclient.models import PaymentRequest, PaymentResponse
+from ovoclient.models import PaymentRequest, PaymentResponse, TransactionType
 
 log = logging.getLogger('ovoclient')
 
@@ -36,13 +36,8 @@ class OvoClientGateway:
     def generate_signature(self, random: int):
         return hmac.new(f'{self.app_id}{random}'.encode(), self.secret_key.encode(), hashlib.sha256)
 
-    def create_payment(self, payment_request):
-        """Send push to pay transaction
-
-        :param `ovoclient.models.PaymentRequest payment_request:
-        :return:
-        """
-        data = payment_request.serialize()
+    def send_request(self, request_data):
+        data = request_data.serialize()
         random_number = int(datetime.timestamp())
 
         headers = {
@@ -58,17 +53,31 @@ class OvoClientGateway:
 
             response_data = PaymentResponse.from_api_json(response.json())
 
-            if response_data.is_success:
+            if not response_data.is_success:
                 raise OvoClientError(response_data.response_status)
 
             return response_data
-
-
-
-
-
-
-
         except Exception as exc:
-            log.exception(f"Failed to create new ovo payment for order {payment_request.reference_number}")
+            log.exception(f"Failed to create new ovo payment for order {request_data.reference_number}")
             raise
+
+    def create_payment(self, payment_request):
+        """Send push to pay transaction
+
+        :param `ovoclient.models.PaymentRequest payment_request:
+        :return:
+        """
+        if payment_request.transaction_type != TransactionType.PUSH_TO_PAY:
+            raise OvoClientError('Invalid Transaction type')
+        return self.send_request(payment_request)
+
+    def reverse_payment(self, reverse_request:PaymentRequest):
+        if reverse_request.transaction_type != TransactionType.REVERSAL:
+            raise OvoClientError('Invalid Transaction type')
+        return self.send_request(reverse_request)
+
+    def void_payment(self, void_request:PaymentRequest):
+        if void_request.transaction_type != TransactionType.VOID:
+            raise OvoClientError('Invalid Transaction type')
+        return self.send_request(void_request)
+

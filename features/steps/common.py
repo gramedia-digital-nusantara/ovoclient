@@ -1,3 +1,4 @@
+import typing
 from enum import Enum, auto
 
 from behave import *
@@ -66,46 +67,74 @@ def step_impl(context):
     context.serialized = context.entity.serialize()
 
 
-class ExampleType(Enum):
-    INPUT = auto()
-    OUTPUT = auto()
-
-
 class PaymentRequestExample:
     DATA_MAP = {
-        'first': {
-            ExampleType.INPUT: {
+        'success': {
+            SimulationType.request: {
                 'transaction_type': TransactionType.PUSH_TO_PAY,
-                'amount': 50000,
+                'amount': 95000,
                 'date': '2019-01-01 00:00:00',
                 'reference_number': '0023902',
                 'tid': '12323',
-                'mid': 'mid',
+                'mid': '0010000000MM001',
                 'merchant_id': 'MID123445',
                 'store_code': 'STORE01',
                 'app_source': AppSource.EDC,
                 'transaction_request_data': TransactionRequest(
-                    batch_no='BATCH1',
+                    batch_no='000004',
                     phone='091029302',
                     merchant_invoice='INV-0010232'
                 )
             },
-            ExampleType.OUTPUT: {
-                'request_type': TransactionType.PUSH_TO_PAY
+            SimulationType.response: {
+                "type": "0210",
+                "processingCode": "040000",
+                "amount": 950000,
+                "date": "2019-01-01 00:00:00",
+                "traceNumber": 3451,
+                "hostTime": "003503",
+                "hostDate": "1103",
+                "referenceNumber": '0023902',
+                "approvalCode": "410315",
+                "responseCode": "00",
+                "tid": "12323",
+                "mid": "0010000000MM001",
+                "transactionRequestData": {
+                    "merchantInvoice": "INV-0010232",
+                    "batchNo": "000004",
+                    "phone": "091029302"
+                },
+                "transactionResponseData": {
+                    "storeAddress1": "rasuna",
+                    "ovoid": "********0400",
+                    "cashUsed": "0",
+                    "storeAddress2": "Said",
+                    "ovoPointsEarned": "0",
+                    "cashBalance": "0",
+                    "fullName": "andrey angkoso",
+                    "storeName": "MatahariMall HeadQuarter",
+                    "ovoPointsUsed": "950000",
+                    "ovoPointsBalance": "2130700",
+                    "storeCode": "MM001",
+                    "paymentType": "PUSH TO PAY"
+                }
 
             }
         }
     }
 
-    def get_input(self, input):
-        return self.DATA_MAP.get(input).get(ExampleType.INPUT)
+    def get_examples(self, input) -> typing.Dict:
+        return self.DATA_MAP.get(input)
 
 
-@given('a PaymentRequest for input = "{input}"')
-def step_impl(context, input):
+@given('a PaymentRequest for request = "{request}"')
+def step_impl(context, request):
     """
+    :param request:
     :type context: behave.runner.Context
     """
-    context.examples = PaymentRequestExample().get_input(input)
-    context.entity = PaymentRequest(**context.examples)
+    context.examples = PaymentRequestExample().get_examples(request)
+    context.example_request = context.examples.get(SimulationType.request)
+    context.example_response = context.examples.get(SimulationType.response)
+    context.entity = PaymentRequest(**context.example_request)
 
