@@ -8,10 +8,10 @@ Feature: Request Serialization
     Then the TransactionRequest is converted to dictionary correctly
 
   Scenario Outline: PaymentRequest serialization
-    Given a PaymentRequest for input = "<input>"
+    Given a PaymentRequest for request = "<request>"
     When I serialize the object
     Then the PaymentRequest is serialized correctly
     Examples:
-      | input | output |
-      | first | first  |
+      | request | response |
+      | success | success  |
 

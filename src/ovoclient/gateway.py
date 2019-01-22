@@ -13,7 +13,7 @@ from http import HTTPStatus
 import requests
 
 from ovoclient.exceptions import OvoClientError
-from ovoclient.models import PaymentRequest, PaymentResponse
+from ovoclient.models import PaymentRequest, PaymentResponse, TransactionType
 
 log = logging.getLogger('ovoclient')
 
@@ -36,39 +36,51 @@ class OvoClientGateway:
     def generate_signature(self, random: int):
         return hmac.new(f'{self.app_id}{random}'.encode(), self.secret_key.encode(), hashlib.sha256)
 
+    def send_request(self, request_data, random_number):
+        data = request_data.serialize()
+
+        headers = {
+            'app-id': self.app_id,
+            'Random': random_number,
+            'Hmac': self.generate_signature(random_number).digest()
+        }
+        try:
+            url = f'{self.base_url}/pos'
+            response = requests.post(url=url, headers=headers, data=data)
+            if response.status_code != HTTPStatus.OK:
+                raise Exception
+
+            response_data = PaymentResponse.from_api_json(response.json())
+
+            if not response_data.is_success:
+                raise OvoClientError(response_data.response_status)
+
+            return response_data
+        except Exception as exc:
+            log.exception(f"Failed to create new ovo payment for order {request_data.reference_number}")
+            raise
+
     def create_payment(self, payment_request):
         """Send push to pay transaction
 
         :param `ovoclient.models.PaymentRequest payment_request:
         :return:
         """
-        data = payment_request.serialize()
-        random_number = int(datetime.timestamp())
+        if payment_request.transaction_type != TransactionType.PUSH_TO_PAY:
+            raise OvoClientError('Invalid Transaction type')
+        random_number = int(datetime.now().timestamp())
+        return self.send_request(payment_request, random_number)
 
-        headers = {
-            'app-id': self.app_id,
-            'Random': random_number,
-            'Hmac': self.generate_signature(random_number)
-        }
-        try:
-            url = f'{self.base_url}/pos'
-            response = requests.post(url, headers, data)
-            if response != HTTPStatus.OK:
-                raise Exception
+    def reverse_payment(self, reverse_request:PaymentRequest):
+        if reverse_request.transaction_type != TransactionType.REVERSAL:
+            raise OvoClientError('Invalid Transaction type')
+        random_number = int(datetime.now().timestamp())
+        return self.send_request(reverse_request, random_number)
 
-            response_data = PaymentResponse.from_api_json(response.json())
+    def void_payment(self, void_request:PaymentRequest):
+        if void_request.transaction_type != TransactionType.VOID:
+            raise OvoClientError('Invalid Transaction type')
+        random_number = int(datetime.now().timestamp())
 
-            if response_data.is_success:
-                raise OvoClientError(response_data.response_status)
+        return self.send_request(void_request, random_number)
 
-            return response_data
-
-
-
-
-
-
-
-        except Exception as exc:
-            log.exception(f"Failed to create new ovo payment for order {payment_request.reference_number}")
-            raise
