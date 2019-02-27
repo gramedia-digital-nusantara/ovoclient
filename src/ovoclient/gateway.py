@@ -4,6 +4,7 @@ Gateway
 
 This module is the primary class for communicating with the AkuLaku API.
 """
+import base64
 from datetime import datetime
 import hashlib
 import hmac
@@ -34,7 +35,8 @@ class OvoClientGateway:
             else "https://api.ovo.id"
 
     def generate_signature(self, random: int):
-        return hmac.new(f'{self.app_id}{random}'.encode(), self.secret_key.encode(), hashlib.sha256)
+        hmac_signature = hmac.new(f'{self.app_id}{random}'.encode(), self.secret_key.encode(), hashlib.sha256)
+        return base64.b64encode(hmac_signature).decode()
 
     def create_payment(self, payment_request):
         """Send push to pay transaction
@@ -55,20 +57,10 @@ class OvoClientGateway:
             response = requests.post(url, headers, data)
             if response != HTTPStatus.OK:
                 raise Exception
-
             response_data = PaymentResponse.from_api_json(response.json())
-
             if response_data.is_success:
                 raise OvoClientError(response_data.response_status)
-
             return response_data
-
-
-
-
-
-
-
         except Exception as exc:
             log.exception(f"Failed to create new ovo payment for order {payment_request.reference_number}")
             raise
