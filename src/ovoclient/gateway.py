@@ -45,7 +45,7 @@ class OvoClientGateway:
         :return:
         """
         data = payment_request.serialize()
-        random_number = int(datetime.timestamp())
+        random_number = int(datetime.now().timestamp())
 
         headers = {
             'app-id': self.app_id,
