@@ -8,6 +8,7 @@ import base64
 from datetime import datetime
 import hashlib
 import hmac
+import json
 import logging
 from http import HTTPStatus
 
@@ -50,15 +51,23 @@ class OvoClientGateway:
 
         headers = {
             'app-id': self.app_id,
-            'Random': random_number,
-            'Hmac': self.generate_signature(random_number)
+            'Random': f"{random_number}",
+            'Hmac': self.generate_signature(random_number),
+            'Content-Type': 'application/json'
         }
         try:
             url = f'{self.base_url}/pos'
-            response = requests.post(url, headers, data)
-            if response != HTTPStatus.OK:
+            response = requests.post(url=url,
+                                     data=json.dumps(data),
+                                     headers=headers)
+            response_json = json.loads(response.content.decode('utf-8'))
+            if response != HTTPStatus.OK and type(response_json) != dict:
                 raise Exception
-            response_data = PaymentResponse.from_api_json(response.json())
+            transaction_request_data = data.get('transactionRequestData', {})
+            response_json['transactionRequestData']['phone'] = transaction_request_data.get('phone', '')
+            response_json['transactionRequestData']['merchantInvoice'] = transaction_request_data.get('merchantInvoice',
+                                                                                                      '')
+            response_data = PaymentResponse.from_api_json(response_json)
             if response_data.is_success:
                 raise OvoClientError(response_data.response_status)
             return response_data
