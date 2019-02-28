@@ -119,15 +119,18 @@ class TransactionResponseData:
 
     @classmethod
     def from_api_json(cls, api_json: Dict):
-        return cls(
-            ovoid=api_json.get('ovoid'),
-            store_code=api_json.get('storeCode'),
-            cash_used=api_json.get('cashUsed'),
-            store_address_1=api_json.get('storeAddress1'),
-            store_address_2=api_json.get('storeAddress2'),
-            ovo_points_used=api_json.get('ovoPointsUsed'),
-            payment_type=api_json.get('paymentType')
-        )
+        if api_json:
+            return cls(
+                ovoid=api_json.get('ovoid'),
+                store_code=api_json.get('storeCode'),
+                cash_used=api_json.get('cashUsed'),
+                store_address_1=api_json.get('storeAddress1'),
+                store_address_2=api_json.get('storeAddress2'),
+                ovo_points_used=api_json.get('ovoPointsUsed'),
+                payment_type=api_json.get('paymentType')
+            )
+        else:
+            return
 
 
 class PaymentRequest:
@@ -179,13 +182,14 @@ class PaymentResponse:
     __slots__ = (
         'payment_type', 'processing_code', 'amount', 'date', 'trace_number', 'host_time', 'host_date',
         'reference_number',
-        'approval_code', 'response_code', 'tid', 'mid', 'transaction_request_data', 'transaction_response_data'
+        'approval_code', 'response_code', 'tid', 'mid', 'transaction_request_data', 'transaction_response_data',
+        'response_status_message'
     )
 
     def __init__(self, payment_type: str, processing_code: str, amount: int, date: str, trace_number: str,
-                 host_time: str, host_date: str, reference_number: str, approval_code: str,
+                 host_time: str, host_date: str, reference_number: str,
                  response_code: str, tid: str, mid: str, transaction_request_data: TransactionRequest,
-                 transaction_response_data: TransactionResponseData):
+                 transaction_response_data: TransactionResponseData = None, approval_code: str = None):
         self.payment_type = payment_type
         self.processing_code = processing_code
         self.amount = amount
@@ -194,12 +198,13 @@ class PaymentResponse:
         self.host_time = host_time
         self.host_date = host_date
         self.reference_number = reference_number
-        self.approval_code = approval_code
         self.response_code = response_code
         self.tid = tid
         self.mid = mid
         self.transaction_request_data = transaction_request_data
         self.transaction_response_data = transaction_response_data
+        self.approval_code = approval_code if approval_code else ''
+        self.response_status_message = self.response_status.phrase
 
     @property
     def response_status(self):
@@ -220,10 +225,10 @@ class PaymentResponse:
             host_time=api_json.get('hostTime'),
             host_date=api_json.get('hostDate'),
             reference_number=api_json.get('referenceNumber'),
-            approval_code=api_json.get('approvalCode'),
             response_code=api_json.get('responseCode'),
             tid=api_json.get('tid'),
             mid=api_json.get('mid'),
             transaction_request_data=TransactionRequest.from_api_json(api_json.get('transactionRequestData')),
-            transaction_response_data=TransactionResponseData.from_api_json(api_json.get('transactionResponseData'))
+            transaction_response_data=TransactionResponseData.from_api_json(api_json.get('transactionResponseData')),
+            approval_code=api_json.get('approvalCode')
         )
