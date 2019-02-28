@@ -35,7 +35,8 @@ class OvoClientGateway:
             else "https://api.ovo.id"
 
     def generate_signature(self, random: int):
-        hmac_signature = hmac.new(f'{self.app_id}{random}'.encode(), self.secret_key.encode(), hashlib.sha256)
+        hmac_signature = hmac.new(f'{self.app_id}{random}'.encode(),
+                                  self.secret_key.encode(), hashlib.sha256).digest()
         return base64.b64encode(hmac_signature).decode()
 
     def create_payment(self, payment_request):
