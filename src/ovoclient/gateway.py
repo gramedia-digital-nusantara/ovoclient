@@ -68,7 +68,7 @@ class OvoClientGateway:
             response_json['transactionRequestData']['merchantInvoice'] = transaction_request_data.get('merchantInvoice',
                                                                                                       '')
             response_data = PaymentResponse.from_api_json(response_json)
-            if response_data.is_success:
+            if not response_data.is_success:
                 raise OvoClientError(response_data.response_status)
             return response_data
         except Exception as exc:
