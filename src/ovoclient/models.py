@@ -93,6 +93,10 @@ class TransactionRequest:
 
 
 class TransactionResponseData:
+    __slots__ = (
+        'ovoid', 'store_code', 'cash_used', 'store_address_1', 'store_address_2', 'ovo_points_used',
+        'ovo_points_balance', 'payment_type'
+    )
     def __init__(self, ovoid: str, store_code: str, cash_used: int,
                  store_address_1: str, store_address_2: str,
                  ovo_points_used: str, ovo_points_balance: str,
@@ -127,6 +131,7 @@ class TransactionResponseData:
                 store_address_1=api_json.get('storeAddress1'),
                 store_address_2=api_json.get('storeAddress2'),
                 ovo_points_used=api_json.get('ovoPointsUsed'),
+                ovo_points_balance=api_json.get('ovoPointsBalance'),
                 payment_type=api_json.get('paymentType')
             )
         else:
