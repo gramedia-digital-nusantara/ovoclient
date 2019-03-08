@@ -40,7 +40,7 @@ class OvoClientGateway:
                                   self.secret_key.encode(), hashlib.sha256).digest()
         return base64.b64encode(hmac_signature).decode()
 
-    def create_payment(self, payment_request):
+    def create_payment(self, payment_request: PaymentRequest):
         """Send push to pay transaction
 
         :param `ovoclient.models.PaymentRequest payment_request:
@@ -65,12 +65,15 @@ class OvoClientGateway:
             if response != HTTPStatus.OK and type(response_json) != dict:
                 raise Exception
 
-        except Exception as exc:
+        except (requests.ConnectTimeout, requests.HTTPError, requests.ReadTimeout,
+                requests.Timeout, requests.ConnectionError):
             response_json = data
             log.exception(f"Failed to create new ovo payment for order {payment_request.reference_number}")
+        except OvoClientError as exc:
+            raise exc
         transaction_request_data = data.get('transactionRequestData', {})
         response_json['transactionRequestData']['phone'] = transaction_request_data.get('phone', '')
         response_json['transactionRequestData']['merchantInvoice'] = transaction_request_data.get('merchantInvoice',
                                                                                                   '')
-        response_data = PaymentResponse.from_api_json(response_json)
-        return response_data
+
+        return PaymentResponse.from_api_json(response_json)
