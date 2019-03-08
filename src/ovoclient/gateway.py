@@ -62,8 +62,8 @@ class OvoClientGateway:
                                      headers=headers,
                                      timeout=35)
             response_json = json.loads(response.content.decode('utf-8')) if response.content else {}
-            if response != HTTPStatus.OK and type(response_json) != dict:
-                raise Exception
+            if response.status_code != HTTPStatus.OK and not response_json:
+                raise OvoClientError("Failed to register into ovo api")
 
         except (requests.ConnectTimeout, requests.HTTPError, requests.ReadTimeout,
                 requests.Timeout, requests.ConnectionError):
