@@ -59,16 +59,18 @@ class OvoClientGateway:
             url = f'{self.base_url}/pos'
             response = requests.post(url=url,
                                      data=json.dumps(data),
-                                     headers=headers)
-            response_json = json.loads(response.content.decode('utf-8'))
+                                     headers=headers,
+                                     timeout=35)
+            response_json = json.loads(response.content.decode('utf-8')) if response.content else {}
             if response != HTTPStatus.OK and type(response_json) != dict:
                 raise Exception
-            transaction_request_data = data.get('transactionRequestData', {})
-            response_json['transactionRequestData']['phone'] = transaction_request_data.get('phone', '')
-            response_json['transactionRequestData']['merchantInvoice'] = transaction_request_data.get('merchantInvoice',
-                                                                                                      '')
-            response_data = PaymentResponse.from_api_json(response_json)
-            return response_data
+
         except Exception as exc:
+            response_json = data
             log.exception(f"Failed to create new ovo payment for order {payment_request.reference_number}")
-            raise
+        transaction_request_data = data.get('transactionRequestData', {})
+        response_json['transactionRequestData']['phone'] = transaction_request_data.get('phone', '')
+        response_json['transactionRequestData']['merchantInvoice'] = transaction_request_data.get('merchantInvoice',
+                                                                                                  '')
+        response_data = PaymentResponse.from_api_json(response_json)
+        return response_data
