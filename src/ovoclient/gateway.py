@@ -60,13 +60,12 @@ class OvoClientGateway:
             response = requests.post(url=url,
                                      data=json.dumps(data),
                                      headers=headers,
-                                     timeout=35)
+                                     timeout=60)
             response_json = json.loads(response.content.decode('utf-8')) if response.content else {}
             if response.status_code != HTTPStatus.OK and not response_json:
                 raise OvoClientError("Failed to register into ovo api")
 
-        except (requests.ConnectTimeout, requests.HTTPError, requests.ReadTimeout,
-                requests.Timeout, requests.ConnectionError):
+        except (requests.ConnectTimeout, requests.HTTPError, requests.ConnectionError):
             response_json = data
             log.exception(f"Failed to create new ovo payment for order {payment_request.reference_number}")
         except OvoClientError as exc:
