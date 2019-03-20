@@ -21,6 +21,8 @@ log = logging.getLogger('ovoclient')
 
 __all__ = ['OvoClientGateway', ]
 
+DEFAULT_TIMEOUT = 60
+
 
 class OvoClientGateway:
     def __init__(self, app_id, secret_key, use_sandbox=False):
@@ -60,7 +62,7 @@ class OvoClientGateway:
             response = requests.post(url=url,
                                      data=json.dumps(data),
                                      headers=headers,
-                                     timeout=60 if not timeout else timeout)
+                                     timeout=DEFAULT_TIMEOUT if not timeout else timeout)
             response_json = json.loads(response.content.decode('utf-8')) if response.content else {}
             if response.status_code != HTTPStatus.OK and not response_json:
                 raise OvoClientError("Failed to register into ovo api")
