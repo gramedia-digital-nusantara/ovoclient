@@ -40,7 +40,7 @@ class OvoClientGateway:
                                   self.secret_key.encode(), hashlib.sha256).digest()
         return base64.b64encode(hmac_signature).decode()
 
-    def create_payment(self, payment_request: PaymentRequest):
+    def payment(self, payment_request: PaymentRequest, timeout: int = None):
         """Send push to pay transaction
 
         :param `ovoclient.models.PaymentRequest payment_request:
@@ -60,7 +60,7 @@ class OvoClientGateway:
             response = requests.post(url=url,
                                      data=json.dumps(data),
                                      headers=headers,
-                                     timeout=60)
+                                     timeout=60 if not timeout else timeout)
             response_json = json.loads(response.content.decode('utf-8')) if response.content else {}
             if response.status_code != HTTPStatus.OK and not response_json:
                 raise OvoClientError("Failed to register into ovo api")
