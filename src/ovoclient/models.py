@@ -230,7 +230,7 @@ class PaymentResponse:
             host_time=api_json.get('hostTime'),
             host_date=api_json.get('hostDate'),
             reference_number=api_json.get('referenceNumber'),
-            response_code=api_json.get('responseCode', '404'),
+            response_code=api_json.get('responseCode', ResponseCode.NOT_FOUND.value),
             tid=api_json.get('tid'),
             mid=api_json.get('mid'),
             transaction_request_data=TransactionRequest.from_api_json(api_json.get('transactionRequestData')),
