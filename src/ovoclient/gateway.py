@@ -66,7 +66,12 @@ class OvoClientGateway:
                                      headers=headers,
                                      timeout=CHARGE_DEFAULT_TIMEOUT if not timeout else timeout)
             response_json = json.loads(response.content.decode('utf-8')) if response.content else {}
-            if response.status_code != HTTPStatus.OK and not response_json:
+            if response.status_code == HTTPStatus.NOT_FOUND and not response_json:
+                response_json = data
+                response_json['responseCode'] = ResponseCode.NOT_FOUND.value
+                log.exception(f"Failed to create new ovo payment for order {payment_request.reference_number}")
+
+            if response.status_code not in [HTTPStatus.OK, HTTPStatus.NOT_FOUND] and not response_json:
                 raise OvoClientError("Failed to register into ovo api")
 
         except (requests.ConnectTimeout, requests.HTTPError, requests.ConnectionError):
@@ -101,6 +106,11 @@ class OvoClientGateway:
                                      headers=headers,
                                      timeout=REVERSAL_DEFAULT_TIMEOUT if not timeout else timeout)
             response_json = json.loads(response.content.decode('utf-8')) if response.content else {}
+            if response.status_code == HTTPStatus.NOT_FOUND and not response_json:
+                response_json = data
+                response_json['responseCode'] = ResponseCode.NOT_FOUND.value
+                log.exception(f"Failed to create reversal for order {payment_request.reference_number}")
+
             if response.status_code != HTTPStatus.OK and not response_json:
                 raise OvoClientError("Failed to register into ovo api")
 
