@@ -17,7 +17,7 @@ import requests
 from ovoclient.exceptions import OvoClientError
 from ovoclient.models import PaymentRequest, PaymentResponse, ResponseCode
 
-log = logging.getLogger('ovoclient')
+log = logging.getLogger()
 
 __all__ = ['OvoClientGateway', ]
 
@@ -40,14 +40,14 @@ class OvoClientGateway:
             else "https://api.ovo.id"
 
     def generate_signature(self, random: int):
-        hmac_signature = hmac.new(f'{self.app_id}{random}'.encode(),
-                                  self.secret_key.encode(), hashlib.sha256).digest()
-        return base64.b64encode(hmac_signature).decode()
+        return hmac.new(self.secret_key.encode(),
+                                  f'{self.app_id}{random}'.encode(), hashlib.sha256).hexdigest()
 
     def charge(self, payment_request: PaymentRequest, timeout: int = None):
         """Send push to pay transaction (CHARGE)
 
         :param `ovoclient.models.PaymentRequest payment_request:
+        :param timeout: int, optional, how long we took time before deciding connection timeout
         :return:
         """
         data = payment_request.serialize()
@@ -59,6 +59,8 @@ class OvoClientGateway:
             'Hmac': self.generate_signature(random_number),
             'Content-Type': 'application/json'
         }
+        log.info(f"Processing ovo payment {payment_request.reference_number}")
+        log.info(f"OVO transaction {datetime.now().isoformat()}: {data}")
         try:
             url = f'{self.base_url}/pos'
             response = requests.post(url=url,
@@ -98,6 +100,8 @@ class OvoClientGateway:
             'Hmac': self.generate_signature(random_number),
             'Content-Type': 'application/json'
         }
+        log.info(f"Processing ovo reversal {payment_request.reference_number}")
+        log.info(f"OVO reversal transaction {datetime.now().isoformat()}: {data}")
         try:
             url = f'{self.base_url}/pos'
             attempt += 1
