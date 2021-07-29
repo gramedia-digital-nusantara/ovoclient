@@ -4,3 +4,4 @@ requests==2.21.0
 # dev, build and testing requirements
 behave==1.2.6
 coverage==4.5.2
+urllib3>=1.26.5 # not directly required, pinned by Snyk to avoid a vulnerability
